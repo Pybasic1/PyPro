@@ -1,27 +1,31 @@
-#Homework2
+#homework3
+import pandas as pd
+import requests
 
-import random
-import string
-import pan
-def generate_password():
-    length = random.randint(10, 20)
 
-    password = ''.join(random.choice(string.ascii_letters) for _ in range(length))
+def generate_students(count=1000):
+    student_data = {
+        'first_name': ['John', 'Jane', 'Alice', 'Bob'],
+        'last_name': ['Doe', 'Smith', 'Johnson', 'Brown'],
+        'email': ['john.doe@gmail.com', 'jane.smith@gmail.com', 'alice.johnson@gkamil.com',
+                  'bob.brown@gmail.com'],
+        'password': ['aesrdtf1', 'esxrdcftvg2', 'easrdtfg3', 'sxrcfygv4'],
+        'birthday': ['1990-01-01', '1995-03-15', '1988-07-20', '1992-11-30']
+    }
+    df = pd.DataFrame(student_data)
 
-    return password
-def calculate_average(file_path):
-    data = pd.read_csv(file_path)
+    df.to_csv('students.csv', index=False)
 
-    average_height = data['height'].mean()
-    average_weight = data['weight'].mean()
+    return df.head(count).to_html(index=False)
 
-    return average_height, average_weight
-#Приклад
-generated_password = generate_password()
-print("Сгенерированный пароль:", generated_password)
 
-# Приклад
-file_path = "students.csv"
-average_height, average_weight = calculate_average(file_path)
-print("Средний рост студентов:", average_height)
-print("Средний вес студентов:", average_weight)
+def get_bitcoin_value(currency='USD', count=1):
+    url = f'https://bitpay.com/api/rates/bitcoin_rate?currency={currency}&convert={count}'
+    response = requests.get(url)
+    bitcoin_value = response.json()['data']['rate']
+
+    currency_symbol = response.json()['data']['symbol']
+
+    bitcoin_value *= count
+
+    return f'{currency_symbol} {bitcoin_value}'
