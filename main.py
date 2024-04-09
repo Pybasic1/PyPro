@@ -1,31 +1,78 @@
-#homework3
-import pandas as pd
-import requests
+from django.db import models
+
+class Teacher(models.Model):
+    first_name = models.CharField(max_length=100)
+    last_name = models.CharField(max_length=100)
+    email = models.EmailField()
+    phone_number = models.CharField(max_length=15)
+    subject = models.CharField(max_length=100)
+    experience_years = models.IntegerField()
+    qualification = models.CharField(max_length=100)
+
+    def __str__(self):
+        return f"{self.first_name} {self.last_name}"
 
 
-def generate_students(count=1000):
-    student_data = {
-        'first_name': ['John', 'Jane', 'Alice', 'Bob'],
-        'last_name': ['Doe', 'Smith', 'Johnson', 'Brown'],
-        'email': ['john.doe@gmail.com', 'jane.smith@gmail.com', 'alice.johnson@gkamil.com',
-                  'bob.brown@gmail.com'],
-        'password': ['aesrdtf1', 'esxrdcftvg2', 'easrdtfg3', 'sxrcfygv4'],
-        'birthday': ['1990-01-01', '1995-03-15', '1988-07-20', '1992-11-30']
-    }
-    df = pd.DataFrame(student_data)
+from django.db import models
 
-    df.to_csv('students.csv', index=False)
+class Group(models.Model):
+    name = models.CharField(max_length=100)
+    year = models.IntegerField()
+    course = models.CharField(max_length=100)
+    department = models.CharField(max_length=100)
+    num_students = models.IntegerField()
+    teacher = models.ForeignKey('teachers.Teacher', on_delete=models.CASCADE)
 
-    return df.head(count).to_html(index=False)
+    def __str__(self):
+        return self.name
 
+    from faker import Faker
+    from .models import Teacher
 
-def get_bitcoin_value(currency='USD', count=1):
-    url = f'https://bitpay.com/api/rates/bitcoin_rate?currency={currency}&convert={count}'
-    response = requests.get(url)
-    bitcoin_value = response.json()['data']['rate']
+    def generate_teachers(n):
+        fake = Faker()
+        for _ in range(n):
+            teacher = Teacher.objects.create(
+                first_name=fake.first_name(),
+                last_name=fake.last_name(),
+                email=fake.email(),
+                phone_number=fake.phone_number(),
+                subject=fake.job(),
+                experience_years=fake.random_int(min=1, max=30),
+                qualification=fake.random_element(elements=("Ph.D.", "Masters", "Bachelor"))
+            )
+            teacher.save()
 
-    currency_symbol = response.json()['data']['symbol']
+    # groups/utils.py
+    from faker import Faker
+    from .models import Group
+    from teachers.models import Teacher
 
-    bitcoin_value *= count
+    def generate_groups(n):
+        fake = Faker()
+        teachers = Teacher.objects.all()
+        for _ in range(n):
+            group = Group.objects.create(
+                name=fake.company(),
+                year=fake.year(),
+                course=fake.random_element(elements=("Mathematics", "Physics", "Chemistry")),
+                department=fake.random_element(elements=("Science", "Arts", "Commerce")),
+                num_students=fake.random_int(min=10, max=50),
+                teacher=fake.random_element(teachers)
+            )
+            group.save()
+            from django.shortcuts import render
+            from .models import Teacher
 
-    return f'{currency_symbol} {bitcoin_value}'
+            def get_teachers(request):
+                teachers = Teacher.objects.all()
+                return render(request, 'teachers/teachers_list.html', {'teachers': teachers})
+
+            # groups/views.py
+            from django.shortcuts import render
+            from .models import Group
+
+            def get_groups(request):
+                groups = Group.objects.all()
+                return render(request, 'groups/groups_list.html', {'groups': groups})
+            #c view пока проблемы(
